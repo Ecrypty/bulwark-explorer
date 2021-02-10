@@ -10,7 +10,7 @@ installNodeAndYarn () {
     sudo apt-get install -y yarn
     sudo npm install -g pm2
     sudo ln -s /usr/bin/nodejs /usr/bin/node
-    sudo chown -R explorer:explorer /home/explorer/.config
+    sudo chown -R apiserver:apiserver /home/apiserver/.config
     clear
 }
 
@@ -25,7 +25,7 @@ server {
 
     root /var/www/html;
     index index.html index.htm index.nginx-debian.html;
-    #server_name explorer.bulwarkcrypto.com;
+    #server_name explorer.florijncoin.com;
     server_name _;
 
     gzip on;
@@ -51,21 +51,21 @@ server {
 
     #listen [::]:443 ssl ipv6only=on; # managed by Certbot
     #listen 443 ssl; # managed by Certbot
-    #ssl_certificate /etc/letsencrypt/live/explorer.bulwarkcrypto.com/fullchain.pem; # managed by Certbot
-    #ssl_certificate_key /etc/letsencrypt/live/explorer.bulwarkcrypto.com/privkey.pem; # managed by Certbot
+    #ssl_certificate /etc/letsencrypt/live/explorer.florijncoin.com/fullchain.pem; # managed by Certbot
+    #ssl_certificate_key /etc/letsencrypt/live/explorer.florijncoin.com/privkey.pem; # managed by Certbot
     #include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     #ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 
 #server {
-#    if ($host = explorer.bulwarkcrypto.com) {
+#    if ($host = explorer.florijncoin.com) {
 #        return 301 https://\$host\$request_uri;
 #    } # managed by Certbot
 #
 #	listen 80 default_server;
 #	listen [::]:80 default_server;
 #
-#	server_name explorer.bulwarkcrypto.com;
+#	server_name explorer.florijncoin.com;
 #   return 404; # managed by Certbot
 #}
 EOL
@@ -80,46 +80,46 @@ installMongo () {
     sudo echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.6.list
     sudo apt-get update -y
     sudo apt-get install -y --allow-unauthenticated mongodb-org
-    sudo chown -R mongodb:mongodb /data/db
+    // sudo chown -R mongodb:mongodb /data/db
     sudo systemctl start mongod
     sudo systemctl enable mongod
-    mongo blockex --eval "db.createUser( { user: \"$rpcuser\", pwd: \"$rpcpassword\", roles: [ \"readWrite\" ] } )"
+    mongo blockex --eval "db.createUser( { user: \"flrnrpc\", pwd: \"Kontneuken01\", roles: [ \"readWrite\" ] } )"
     clear
 }
 
-installBulwark () {
-    echo "Installing Bulwark..."
-    mkdir -p /tmp/bulwark
-    cd /tmp/bulwark
-    curl -Lo bulwark.tar.gz $bwklink
-    tar -xzf bulwark.tar.gz
-    sudo mv * /usr/local/bin
-    cd
-    rm -rf /tmp/bulwark
-    mkdir -p /home/explorer/.bulwark
-    cat > sudo /home/explorer/.bulwark/bulwark.conf << EOL
-rpcport=52544
-rpcuser=$rpcuser
-rpcpassword=$rpcpassword
+//installBulwark () {
+  //  echo "Installing Bulwark..."
+   // mkdir -p /tmp/bulwark
+   // cd /tmp/bulwark
+   // curl -Lo bulwark.tar.gz $bwklink
+   // tar -xzf bulwark.tar.gz
+   // sudo mv * /usr/local/bin
+   // cd
+   // rm -rf /tmp/bulwark
+   // mkdir -p /home/explorer/.bulwark
+    cat > sudo /home/explorer/.florijncoincore/florijncoin.conf << EOL
+rpcport=8349
+rpcuser=flrnrpc
+rpcpassword=Kontneuken01
 daemon=1
 txindex=1
 EOL
-    sudo cat > sudo /etc/systemd/system/bulwarkd.service << EOL
+    sudo cat > sudo /etc/systemd/system/florijncoind.service << EOL
 [Unit]
-Description=bulwarkd
+Description=florijncoind
 After=network.target
 [Service]
 Type=forking
 User=explorer
-WorkingDirectory=/home/explorer
-ExecStart=/usr/local/bin/bulwarkd -datadir=/home/explorer/.bulwark
-ExecStop=/usr/local/bin/bulwark-cli -datadir=/home/explorer/.bulwark stop
+WorkingDirectory=/home/apiserver
+ExecStart=/usr/local/bin/florijncoind -datadir=/home/apiserver/.florijncoin
+ExecStop=/usr/local/bin/florijncoin-cli -datadir=/home/apiserver/.florijncoin stop
 Restart=on-abort
 [Install]
 WantedBy=multi-user.target
 EOL
-    sudo systemctl start bulwarkd
-    sudo systemctl enable bulwarkd
+    sudo systemctl start florijncoind
+    sudo systemctl enable florijncoind
     echo "Sleeping for 1 hour while node syncs blockchain..."
     sleep 1h
     clear
@@ -127,10 +127,10 @@ EOL
 
 installBlockEx () {
     echo "Installing BlockEx..."
-    git clone https://github.com/bulwark-crypto/bulwark-explorer.git /home/explorer/blockex
-    cd /home/explorer/blockex
+    git clone https://github.com/bulwark-crypto/bulwark-explorer.git /home/apiserver/blockex
+    cd /home/apiserver/blockex
     yarn install
-    cat > /home/explorer/blockex/config.server.js << EOL
+    cat > /home/apiserver/blockex/config.server.js << EOL
 /**
  * Keep all your API & secrets here. DO NOT IMPORT THIS FILE IN /client folder
  */
@@ -138,22 +138,22 @@ const secretsConfig = {
   db: {
     host: '127.0.0.1',
     port: '27017',
-    name: 'blockex',
-    user: 'blockexuser',
-    pass: 'Explorer!1'
+    name: 'apiserver',
+    user: 'flrnrpc',
+    pass: 'Kontneuken01'
   },
   rpc: {
     host: '127.0.0.1',
-    port: '52541',
-    user: 'bulwarkrpc',
-    pass: 'someverysafepassword',
+    port: '8349',
+    user: 'flrn',
+    pass: 'Kontneuken01',
     timeout: 8000, // 8 seconds
   },
 }
 
 module.exports = { secretsConfig }; // This is returned as an object on purpose so you have to be explicit at stating that you are accessing a secrets config
 EOL
-    cat > /home/explorer/blockex/config.js << EOL
+    cat > /home/apiserver/blockex/config.js << EOL
 const { SocialType } = require('./features/social/data');
 
 /**
@@ -168,21 +168,21 @@ const { SocialType } = require('./features/social/data');
  */
 const config = {
   api: {
-    host: 'http://localhost', // ex: 'https://explorer.bulwarkcrypto.com' for nginx (SSL), 'http://IP_ADDRESS' 
+    host: 'http://localhost', // ex: 'https://explorer.florijncoin.com' for nginx (SSL), 'http://IP_ADDRESS' 
     port: '3000', // ex: Port 3000 on prod and localhost
     portWorker: '3000', // ex: Port 443 for production(ngingx) if you have SSL (we use certbot), 3000 on localhost or ip
     prefix: '/api',
     timeout: '5s'
   },
   coinDetails: {
-    name: 'Bulwark',
-    shortName: 'BWK',
+    name: 'Florijncoin',
+    shortName: 'FLRN',
     displayDecimals: 2,
-    longName: 'Bulwark Cryptocurrency',
+    longName: 'Florijncoin Cryptocurrency',
     coinNumberFormat: '0,0.0000',
     coinTooltipNumberFormat: '0,0.0000000000', // Hovering over a number will show a larger percision tooltip
-    websiteUrl: 'https://bulwarkcrypto.com/',
-    masternodeCollateral: 5000 // MN ROI% gets based on this number. If your coin has multi-tiered masternodes then set this to lowest tier (ROI% will simply be higher for bigger tiers)
+    websiteUrl: 'https://florijncoin.com/',
+    masternodeCollateral: 10000 // MN ROI% gets based on this number. If your coin has multi-tiered masternodes then set this to lowest tier (ROI% will simply be higher for bigger tiers)
   },
   offChainSignOn: {
     enabled: true,
@@ -392,12 +392,12 @@ EOL
     nodejs ./cron/rich.js
     clear
     cat > mycron << EOL
-*/1 * * * * cd /home/explorer/blockex && ./script/cron_block.sh >> ./tmp/block.log 2>&1
-*/1 * * * * cd /home/explorer/blockex && /usr/bin/nodejs ./cron/masternode.js >> ./tmp/masternode.log 2>&1
-*/1 * * * * cd /home/explorer/blockex && /usr/bin/nodejs ./cron/peer.js >> ./tmp/peer.log 2>&1
-*/1 * * * * cd /home/explorer/blockex && /usr/bin/nodejs ./cron/rich.js >> ./tmp/rich.log 2>&1
-*/5 * * * * cd /home/explorer/blockex && /usr/bin/nodejs ./cron/coin.js >> ./tmp/coin.log 2>&1
-0 0 * * * cd /home/explorer/blockex && /usr/bin/nodejs ./cron/timeIntervals.js >> ./tmp/timeIntervals.log 2>&1
+*/1 * * * * cd /home/apiserver/blockex && ./script/cron_block.sh >> ./tmp/block.log 2>&1
+*/1 * * * * cd /home/apiserver/blockex && /usr/bin/nodejs ./cron/masternode.js >> ./tmp/masternode.log 2>&1
+*/1 * * * * cd /home/apiserver/blockex && /usr/bin/nodejs ./cron/peer.js >> ./tmp/peer.log 2>&1
+*/1 * * * * cd /home/apiserver/blockex && /usr/bin/nodejs ./cron/rich.js >> ./tmp/rich.log 2>&1
+*/5 * * * * cd /home/apiserver/blockex && /usr/bin/nodejs ./cron/coin.js >> ./tmp/coin.log 2>&1
+0 0 * * * cd /home/apiserver/blockex && /usr/bin/nodejs ./cron/timeIntervals.js >> ./tmp/timeIntervals.log 2>&1
 EOL
     crontab mycron
     rm -f mycron
@@ -412,29 +412,29 @@ sudo apt-get install -y apt-transport-https build-essential cron curl gcc git g+
 clear
 
 # Variables
-echo "Setting up variables..."
-bwklink=`curl -s https://api.github.com/repos/bulwark-crypto/bulwark/releases/latest | grep browser_download_url | grep linux64 | cut -d '"' -f 4`
-rpcuser=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '')
-rpcpassword=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 ; echo '')
-echo "Repo: $bwklink"
-echo "PWD: $PWD"
-echo "User: $rpcuser"
-echo "Pass: $rpcpassword"
-sleep 5s
-clear
+//echo "Setting up variables..."
+//bwklink=`curl -s https://api.github.com/repos/bulwark-crypto/bulwark/releases/latest | grep browser_download_url | grep linux64 | cut -d '"' -f 4`
+//rpcuser=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '')
+//rpcpassword=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32 ; echo '')
+//echo "Repo: $bwklink"
+//echo "PWD: $PWD"
+//echo "User: $rpcuser"
+//echo "Pass: $rpcpassword"
+//sleep 5s
+//clear
 
 # Check for blockex folder, if found then update, else install.
-if [ ! -d "/home/explorer/blockex" ]
-then
-    installNginx
-    installMongo
-    #installBulwark
-    installNodeAndYarn
-    installBlockEx
-    echo "Finished installation!"
-else
-    cd /home/explorer/blockex
-    git pull
-    pm2 restart index
-    echo "BlockEx updated!"
+//if [ ! -d "/home/explorer/blockex" ]
+//then
+//    installNginx
+//    installMongo
+//    #installBulwark
+//    installNodeAndYarn
+//    installBlockEx
+//    echo "Finished installation!"
+//else
+//    cd /home/apiserver/blockex
+//    git pull
+//    pm2 restart index
+//    echo "BlockEx updated!"
 fi
