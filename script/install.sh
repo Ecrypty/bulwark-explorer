@@ -13,8 +13,8 @@ installNodeAndYarn () {
     sudo apt-get update -y
     sudo apt-get install -y yarn
     sudo npm install -g pm2
-    sudo ln -s /usr/bin/nodejs /usr/bin/node
-    sudo chown -R apiserver:apiserver /home/apiserver/.config
+    sudo ln -sf /usr/bin/nodejs /usr/bin/node
+    sudo chown -R apiserver /home/apiserver/.config
     clear
 }
 
